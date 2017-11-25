@@ -36,6 +36,7 @@ class CheckinReview:
 		self.confirm = conf.getboolean('common', 'confirm')
 		self.askForLeaveTopicUrl = section['ask_for_leave_topic_url']
 		self.dispelUrl = section['dispel_url']
+		self.nonLocalTimeMembers  = section['non_local_time_members']
 		logging.info('''load config info, login-{}, loginUrl-{},username-{},
 			password-{},baseUrl-{},memberManageUrl-{},maxPage-{},maxDispel-{},
 			askForLeave-{},askForLeaveTopicUrl-{},dispelUrl-{}'''.format(self.login,self.loginUrl,self.username,
@@ -135,6 +136,10 @@ class CheckinReview:
 			today = datetime.date.today()
 			review_date = datetime.datetime(today.year,today.month,today.day)
 			uncheck_consecutive_days = (review_date - last_check_date).days - 1
+			nonLocal_time_member_list = list(self.nonLocalTimeMembers.split(',')) if self.nonLocalTimeMembers else []
+			logging.info('nonLocalTimeMembers: {}'.format(self.nonLocalTimeMembers))
+			if member_id in nonLocal_time_member_list:
+				uncheck_consecutive_days -= 1
 
 			# dispel if consecutive 4 days for any member
 			if uncheck_consecutive_days >= 4:
@@ -251,7 +256,7 @@ class CheckinReview:
  			logging.exception(e)
 		return False
 def main():
-	time_ratate_handler = TimedRotatingFileHandler('log/checkin_review_log.txt','d',1,30)
+	time_ratate_handler = TimedRotatingFileHandler('H:/private/python/SbAssistant/log/checkin_review_log.txt','d',1,30)
 	stream_handler = logging.StreamHandler(sys.stdout)
 	logging.basicConfig(
 			# filename='checkin_reviwe_log.txt',
@@ -259,7 +264,7 @@ def main():
 			level = logging.DEBUG,
 			handlers = [stream_handler,time_ratate_handler]
 		)
-	cr = CheckinReview('setting.ini')
+	cr = CheckinReview('H:/private/python/SbAssistant/config/setting.ini')
 	cr.start_review()
 	
 	
