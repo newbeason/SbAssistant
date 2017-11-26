@@ -160,30 +160,10 @@ class CheckinReview:
 		return dispel_members
 
 	def modify_date_format(self,zh_date_str):
-		if not zh_date_str.find('十二月'):
-			return zh_date_str.replace('十二月','12')
-		elif not zh_date_str.find('十一月'):
-			return zh_date_str.replace('十一月','11')
-		elif not zh_date_str.find('十月'):
-			return zh_date_str.replace('十月','10')
-		elif not zh_date_str.find('九月'):
-			return zh_date_str.replace('九月','9')
-		elif not zh_date_str.find('八月'):
-			return zh_date_str.replace('八月','8')
-		elif not zh_date_str.find('七月'):
-			return zh_date_str.replace('七月','7')
-		elif not zh_date_str.find('六月'):
-			return zh_date_str.replace('六月','6')
-		elif not zh_date_str.find('五月'):
-			return zh_date_str.replace('五月','5')
-		elif not zh_date_str.find('四月'):
-			return zh_date_str.replace('四月','4')
-		elif not zh_date_str.find('三月'):
-			return zh_date_str.replace('三月','3')
-		elif not zh_date_str.find('二月'):
-			return zh_date_str.replace('二月','2')
-		elif not zh_date_str.find('一月'):
-			return zh_date_str.replace('一月','1')
+		months = list(map (lambda *month: month,['十二月','十一月','十月','九月','八月','七月','六月','五月','四月','三月','二月','一月'],range(12,0,-1)))
+		for month in months:
+			if not zh_date_str.find(month[0]):
+				return zh_date_str.replace(month[0],str(month[1]))
 
 	# 解析用户最近10天打卡记录,并按照打卡日期倒序排序
 	def scrap_recent_check_record_of_member(self,page_content):
