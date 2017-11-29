@@ -39,9 +39,11 @@ class CheckinReview:
 		self.nonLocalTimeMembers  = section['non_local_time_members']
 		logging.info('''load config info, login-{}, loginUrl-{},username-{},
 			password-{},baseUrl-{},memberManageUrl-{},maxPage-{},maxDispel-{},
-			askForLeave-{},askForLeaveTopicUrl-{},dispelUrl-{}'''.format(self.login,self.loginUrl,self.username,
-				self.password,self.baseUrl,self.memberManageUrl,self.maxPage,self.maxDispel,
-				self.askForLeave,self.askForLeaveTopicUrl,self.dispelUrl))
+			askForLeave-{},askForLeaveTopicUrl-{},dispelUrl-{}'''.format(
+			self.login,self.loginUrl,self.username,
+			self.password,self.baseUrl,self.memberManageUrl,
+			self.maxPage,self.maxDispel,self.askForLeave,
+			self.askForLeaveTopicUrl,self.dispelUrl))
 
 	def login_shanbay(self):
 		login_params = {
@@ -53,8 +55,26 @@ class CheckinReview:
 
 	# 进入用户管理页面,遍历页面处理
 	def start_review(self):
+		dispel_members = self.fetch_to_dispel_members()
+		member_ids = list()
+		for member_id in dispel_members.keys():
+			member_ids.append(member_id)
+		if self.maxDispel < len(member_ids):
+			member_ids = member_ids[:self.maxDispel]
+		if self.confirm:
+			confirm = input('are you sure to dispel members: {}, \input y or n: \
+				'.format(member_ids))
+			if confirm == 'y':
+				self.disple_members(member_ids)
+			else:
+				logging.info("you input {}, will not dispel".format(confirm))
+		else:
+			self.disple_members(member_ids)
+
+	def fetch_to_dispel_members(self):
 		session = self.session
-		group_manage_page_content = download_page(self.memberManageUrl, session=session)
+		group_manage_page_content = download_page(
+			self.memberManageUrl, session=session)
 		tree = fromstring(group_manage_page_content)
 		# print(group_manage_page_content)
 		page_links = tree.xpath('//a[contains(@class,"endless_page_link")]/text()')
@@ -68,25 +88,14 @@ class CheckinReview:
 		max_page = last_page_num if max_page > last_page_num else max_page
 		logging.info('max_page: {}'.format(max_page))
 		for page in range(1,max_page+1):
-			page_content = download_page(self.memberManageUrl + '?page=' + str(page),session=session)
+			page_content = download_page(
+				self.memberManageUrl + '?page=' + str(page),session=session)
 			dispel_members.update(self.review_on_page(page_content,page))
 
 		#display all dispel members
 		logging.info('all of the being dispeled members:')
 		logging.info(str(dispel_members))
-		member_ids = list()
-		for member_id in dispel_members.keys():
-			member_ids.append(member_id)
-		if self.maxDispel < len(member_ids):
-			member_ids = member_ids[:self.maxDispel]
-		if self.confirm:
-			confirm = input('are you sure to dispel members: {}, input y or n: '.format(member_ids))
-			if confirm == 'y':
-				self.disple_members(member_ids)
-			else:
-				logging.info("you input {}, will not dispel".format(confirm))
-		else:
-			self.disple_members(member_ids)
+		return dispel_members
 
 	#处理单个页面数据
 	def review_on_page(self,page_html,page_num):
@@ -103,7 +112,9 @@ class CheckinReview:
 			rate_td = member_row.findtext('./td[@class="rate"]/span')
 			checked_spans = member_row.findall('./td[@class="checked"]/span')
 			logging.debug('{},{}===={}-{}-{}-{}-{}-{}-{}'.
-				format(role,member_group_id,nickname_a.get('href'), nickname_a.text,points_td,days_td,rate_td,checked_spans[0].text.strip(),checked_spans[1].text.strip()) )
+				format(role,member_group_id,nickname_a.get('href'),
+				nickname_a.text,points_td,days_td,rate_td,
+				checked_spans[0].text.strip(),checked_spans[1].text.strip()) )
 			rate = Decimal(rate_td[:-1])
 			member_id = nickname_a.get('href')[14:-1]
 			nickname = nickname_a.text
@@ -160,7 +171,7 @@ class CheckinReview:
 		return dispel_members
 
 	def modify_date_format(self,zh_date_str):
-		months = list(map (lambda *month: month,['十二月','十一月','十月','九月','八月','七月','六月','五月','四月','三月','二月','一月'],range(12,0,-1)))
+		months = list(zip(['十二月','十一月','十月','九月','八月','七月','六月','五月','四月','三月','二月','一月'],range(12,0,-1)))
 		for month in months:
 			if not zh_date_str.find(month[0]):
 				return zh_date_str.replace(month[0],str(month[1]))

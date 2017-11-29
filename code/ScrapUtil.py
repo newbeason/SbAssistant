@@ -1,4 +1,5 @@
 import requests
+import time
 
 # download a page 
 def download_page(url,retries=2,timeout=10,session=None):
